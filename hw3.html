@@ -16,6 +16,43 @@
     <script src="js/three.min.js"></script>
     <script src="js/OrbitControls.js"></script>
     <script src="js/KeyboardState.js"></script>
+    <script type="x-shader/x-fragment" id="fragmentShaderDepth">
+        uniform sampler2D texture;
+        varying vec2 vUV;
+
+        vec4 pack_depth(const in float depth) {
+
+        const vec4 bit_shift = vec4(256.0 * 256.0 * 256.0, 256.0 * 256.0, 256.0, 1.0);
+        const vec4 bit_mask = vec4(0.0, 1.0 / 256.0, 1.0 / 256.0, 1.0 / 256.0);
+        vec4 res = fract(depth * bit_shift);
+        res -= res.xxyz * bit_mask;
+        return res;
+
+        }
+
+        void main() {
+
+        vec4 pixel = texture2D(texture, vUV);
+
+        if (pixel.a < 0.5) discard;
+
+        gl_FragData[0] = pack_depth(gl_FragCoord.z);
+
+        }
+    </script>
+    <script type="x-shader/x-vertex" id="vertexShaderDepth">
+        varying vec2 vUV;
+
+        void main() {
+
+        vUV = 1.0 * uv;
+
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+
+        gl_Position = projectionMatrix * mvPosition;
+
+        }
+    </script>
 
     <script>
 
@@ -98,18 +135,39 @@ function init()
 	tire.add(mesh0);
 	tire.add(mesh3);
 	scene.add(tire);
+    ////////////////////////////////////////////////////////////////////floor
+	var floor = new THREE.Mesh(new THREE.PlaneGeometry(400, 400, 100, 100),
+    new THREE.MeshLambertMaterial());
+	floor.rotation.x = -Math.PI / 2;
+	scene.add(floor);
 	//tire.position.set(0, 1000, 0);
 
 
 
-    //////////////////////////spotlight
+    ////////////////////////////////////////////////////////////////////spotlight
 	light = new THREE.SpotLight(0xffffff, 1.5);
 	light.position.set(0, 150, 0);
-	light.angle = Math.PI / 6;
-	light.exponent = 10;
-	scene.add(light);
-	light.target = tire;
+	light.angle = Math.PI / 1;
+	light.exponent = 5;
 
+	
+
+	light.castShadow = true;
+
+	light.shadowMapWidth = 1024;
+	light.shadowMapHeight = 1024;
+
+	light.shadowCameraNear = 5;
+	light.shadowCameraFar = 4000;
+	light.shadowCameraFov = light.angle / Math.PI * 180;
+	light.target = tire;
+	scene.add(light);
+
+	floor.receiveShadow = true;
+	mesh0.castShadow = true;
+	mesh1.castShadow = true;
+	mesh3.castShadow = true;
+	renderer.shadowMapEnabled = true;
 
 	/*var loader = new THREE.OBJMTLLoader();
 	loader.load ('models/toycar.obj', 'models/toycar.mtl',
@@ -127,7 +185,7 @@ function init()
 	scene.add(gridXZ);*/
 
     //////////////////////////////////////////////////////////////////////floor
-	var floorTexture = new THREE.ImageUtils.loadTexture('images/copper.jpg');
+	/*var floorTexture = new THREE.ImageUtils.loadTexture('images/copper.jpg');
 	floorTexture.wrapS = floorTexture.wrapT = THREE.RepeatWrapping;
 	floorTexture.repeat.set(1, 1);
 	var floorMaterial = new THREE.MeshBasicMaterial({ map: floorTexture, side: THREE.DoubleSide });
@@ -136,7 +194,8 @@ function init()
 	var floor = new THREE.Mesh(floorGeometry, floorMaterial);
 	floor.position.y = -0.5;
 	floor.rotation.x = Math.PI / 2;
-	scene.add(floor);
+	scene.add(floor);*/
+
     
     
 	renderer = new THREE.WebGLRenderer();
@@ -151,7 +210,7 @@ function init()
 	pointLight.position.set (0,0,200);
 	//scene.add (pointLight);
     
-	var ambientLight = new THREE.AmbientLight (0x222222);
+	var ambientLight = new THREE.AmbientLight (0x333333);
 	scene.add(ambientLight);
 	window.addEventListener ('resize', onWindowResize, false);
 }
