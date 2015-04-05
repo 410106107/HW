@@ -26,12 +26,13 @@ var mesh,mesh0,mesh2;
 var light;
 var renderer;
 var side;
-
+var spotLight;
         
 
 // state variables of toycar
 var pos = new THREE.Vector3(0,0,0);
 var angle = 0, speed = 5;
+var rt, alpha, h, ly;
 
 init();
 animate();
@@ -40,6 +41,9 @@ function init()
 {
 	var width = window.innerWidth;
 	var height = window.innerHeight;
+
+	//ly = 150
+	//alpha = Math.PI / 6;
 
 	renderer = new THREE.WebGLRenderer({antialias: true});
 	renderer.setSize (width, height);
@@ -57,7 +61,8 @@ function init()
 	THREE.ImageUtils.crossOrigin = '';
 	var colormap = THREE.ImageUtils.loadTexture('images/tire_side.png');
 	var colormap2 = THREE.ImageUtils.loadTexture('images/tire_wheel.png');
-	var colormap3 = THREE.ImageUtils.loadTexture('images/copper.jpg');
+	//var colormap3 = THREE.ImageUtils.loadTexture('images/copper.jpg');
+	var colormap4 = THREE.ImageUtils.loadTexture('images/tire_wheel_bump.png');
 
 	tire = new THREE.Object3D();
 	geometry = new THREE.CircleGeometry(50, 20);
@@ -68,11 +73,13 @@ function init()
 	});
 	var mesh = new THREE.Mesh(geometry, material);
 	colormap2.wrapS = colormap2.wrapT = THREE.RepeatWrapping; 
-	colormap2.repeat.set( 8, 1 );
+	colormap2.repeat.set( 1, 1 );
 	var mesh2 = new THREE.Mesh(new THREE.CylinderGeometry(50, 50, 20, 30, 1, true), // only side
     new THREE.MeshBasicMaterial({
         map: colormap2,
-        side: THREE.DoubleSide
+        side: THREE.DoubleSide,
+        bumpMap: colormap4,
+        bumpScale: 2.0
     }));
 	mesh2.rotation.x = Math.PI / 2;
 	
@@ -96,12 +103,12 @@ function init()
 
 
     //////////////////////////spotlight
-	/*light = new THREE.SpotLight(0xffffff, 1.5);
-	light.position.set(0, ly, 0);
-	light.angle = alpha;
+	light = new THREE.SpotLight(0xffffff, 1.5);
+	light.position.set(0, 150, 0);
+	light.angle = Math.PI / 6;
 	light.exponent = 10;
 	scene.add(light);
-	light.target = box;*/
+	light.target = tire;
 
 
 	/*var loader = new THREE.OBJMTLLoader();
@@ -115,7 +122,7 @@ function init()
 	controls = new THREE.OrbitControls (camera, renderer.domElement);
 
     ///////////////////////////////////////////////////////////////////////block
-	/*var gridXZ = new THREE.GridHelper(100, 10);
+	/*var gridXZ = new THREE.GridHelper(1000, 10);
 	gridXZ.setColors( new THREE.Color(0xff0000), new THREE.Color(0xffffff) );
 	scene.add(gridXZ);*/
 
@@ -131,7 +138,7 @@ function init()
 	floor.rotation.x = Math.PI / 2;
 	scene.add(floor);
     
-
+    
 	renderer = new THREE.WebGLRenderer();
 	renderer.setSize(window.innerWidth, window.innerHeight);
 	renderer.setClearColor(0x888888);
@@ -139,12 +146,12 @@ function init()
 	controls = new THREE.OrbitControls(camera, renderer.domElement);
 
 	document.body.appendChild(renderer.domElement);
-
+    
 	var pointLight = new THREE.PointLight (0xffffff);
-	pointLight.position.set (0,300,200);
-	scene.add (pointLight);
-
-	var ambientLight = new THREE.AmbientLight (0x888888);
+	pointLight.position.set (0,0,200);
+	//scene.add (pointLight);
+    
+	var ambientLight = new THREE.AmbientLight (0x222222);
 	scene.add(ambientLight);
 	window.addEventListener ('resize', onWindowResize, false);
 }
